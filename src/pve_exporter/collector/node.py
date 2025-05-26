@@ -71,12 +71,12 @@ class NodeConfigCollector:
             'Proxmox guest vm volume mountpoint (retrievied via qemu agent)',
             labels=['id', 'node', 'vmtype', 'dev'])
         vmtype = 'qemu'
-        for vmdata in pve.nodes(node).qemu.get():
-            config = pve.nodes(node).qemu(vmdata['vmid']).config.get()
-            status = pve.nodes(node).qemu(vmdata['vmid']).status.current.get()
+        for vmdata in self._pve.nodes(node).qemu.get():
+            config = self._pve.nodes(node).qemu(vmdata['vmid']).config.get()
+            status = self._pve.nodes(node).qemu(vmdata['vmid']).status.current.get()
             if status['status'] == 'running' and 'agent' in config.keys():
                 if config['agent'] == '1':
-                    fsinfo = pve.nodes(node).qemu(vmdata['vmid']).agent.get('get-fsinfo')
+                    fsinfo = self._pve.nodes(node).qemu(vmdata['vmid']).agent.get('get-fsinfo')
                     for volume in fsinfo['result']:
                         label_values = [f"{vmtype}/{vmdata['vmid']}", node, vmtype, volume['disk'][0]['dev']]
                         for key, metric_value in volume.items():
