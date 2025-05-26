@@ -58,18 +58,15 @@ class NodeConfigCollector:
                     metrics[key].add_metric(label_values, metric_value)
         
         # Scrape qemu guest agent fsinfo
+        # Scrape qemu guest agent fsinfo
         metrics['total-bytes'] = GaugeMetricFamily(
             'pve_guest_volume_size_bytes',
             'Proxmox guest vm volume size (retrievied via qemu agent)',
-            labels=['id', 'node', 'dev'])
+            labels=['id', 'node', 'vmtype', 'dev', 'mountpoint'])
         metrics['used-bytes'] = GaugeMetricFamily(
             'pve_guest_volume_usage_bytes',
             'Proxmox guest vm volume usage (retrievied via qemu agent)',
-            labels=['id', 'node', 'dev'])
-        metrics['mountpoint'] = GaugeMetricFamily(
-            'pve_guest_volume_mountpoint',
-            'Proxmox guest vm volume mountpoint (retrievied via qemu agent)',
-            labels=['id', 'node', 'vmtype', 'dev'])
+            labels=['id', 'node', 'vmtype', 'dev', 'mountpoint'])
         vmtype = 'qemu'
         for vmdata in self._pve.nodes(node).qemu.get():
             config = self._pve.nodes(node).qemu(vmdata['vmid']).config.get()
@@ -78,7 +75,7 @@ class NodeConfigCollector:
                 if config['agent'] == '1':
                     fsinfo = self._pve.nodes(node).qemu(vmdata['vmid']).agent.get('get-fsinfo')
                     for volume in fsinfo['result']:
-                        label_values = [f"{vmtype}/{vmdata['vmid']}", node, vmtype, volume['disk'][0]['dev']]
+                        label_values = [f"{vmtype}/{vmdata['vmid']}", node, vmtype, volume['disk'][0]['dev'], volume['mountpoint']]
                         for key, metric_value in volume.items():
                             if key in metrics:
                                 metrics[key].add_metric(label_values, metric_value)
