@@ -56,6 +56,32 @@ class NodeConfigCollector:
                 label_values = [f"{vmtype}/{vmdata['vmid']}", node, vmtype]
                 if key in metrics:
                     metrics[key].add_metric(label_values, metric_value)
+        
+        # Scrape qemu guest agent fsinfo
+        metrics['total-bytes'] = GaugeMetricFamily(
+            'pve_guest_volume_size_bytes',
+            'Proxmox guest vm volume size (retrievied via qemu agent)',
+            labels=['id', 'node', 'dev'])
+        metrics['used-bytes'] = GaugeMetricFamily(
+            'pve_guest_volume_usage_bytes',
+            'Proxmox guest vm volume usage (retrievied via qemu agent)',
+            labels=['id', 'node', 'dev'])
+        metrics['mountpoint'] = GaugeMetricFamily(
+            'pve_guest_volume_mountpoint',
+            'Proxmox guest vm volume mountpoint (retrievied via qemu agent)',
+            labels=['id', 'node', 'vmtype', 'dev'])
+        vmtype = 'qemu'
+        for vmdata in pve.nodes(node).qemu.get():
+            config = pve.nodes(node).qemu(vmdata['vmid']).config.get()
+            status = pve.nodes(node).qemu(vmdata['vmid']).status.current.get()
+            if status['status'] == 'running' and 'agent' in config.keys():
+                if config['agent'] == '1':
+                    fsinfo = pve.nodes(node).qemu(vmdata['vmid']).agent.get('get-fsinfo')
+                    for volume in fsinfo['result']:
+                        label_values = [f"{vmtype}/{vmdata['vmid']}", node, vmtype, volume['disk'][0]['dev']]
+                        for key, metric_value in volume.items():
+                            if key in metrics:
+                                metrics[key].add_metric(label_values, metric_value)
 
         return metrics.values()
 
