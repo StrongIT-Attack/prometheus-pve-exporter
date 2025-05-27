@@ -75,8 +75,12 @@ class NodeConfigCollector:
                     try:
                         fsinfo = self._pve.nodes(node).qemu(vmdata['vmid']).agent.get('get-fsinfo')
                     except:
+                        print(f"Failed to fetch fsinfo from guest with id {vmdata['vmid']}. Check if qemu agent is installed and running.")
                         continue
                     for volume in fsinfo['result']:
+                        if not 'disk' in volume:
+                            print(f"Failed to fetch device name from guest with id {vmdata['vmid']}")
+                            continue
                         label_values = [f"{vmtype}/{vmdata['vmid']}", node, vmtype, volume['disk'][0]['dev'], volume['mountpoint']]
                         for key, metric_value in volume.items():
                             if key in metrics:
