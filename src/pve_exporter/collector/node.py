@@ -81,10 +81,14 @@ class NodeConfigCollector:
                         if not 'disk' in volume:
                             print(f"Failed to fetch device name from guest with id {vmdata['vmid']}")
                             continue
-                        label_values = [f"{vmtype}/{vmdata['vmid']}", node, vmtype, volume['disk'][0]['dev'], volume['mountpoint']]
-                        for key, metric_value in volume.items():
-                            if key in metrics:
-                                metrics[key].add_metric(label_values, metric_value)
+                        if len(volume['disk']) > 0:
+                            label_values = [f"{vmtype}/{vmdata['vmid']}", node, vmtype, volume['disk'][0]['dev'], volume['mountpoint']]
+                            for key, metric_value in volume.items():
+                                if key in metrics:
+                                    metrics[key].add_metric(label_values, metric_value)
+                        else:
+                            print(f"Failed to fetch device name from guest with id {vmdata['vmid']}")
+                            continue
 
         return metrics.values()
 
